@@ -28,7 +28,7 @@ var ExtensionManager = (function(root){
 
        validateDependency = function(e,dep){
             if(!dep) return [];
-            var i = 0,len = dep.length,item,obj= {};
+            var i = 0,len = dep.length,item,obj = {};
             for(; i < len; i++){
                item = dep[i];
                if(!(item in e) && !(item in e.ext)){ 
