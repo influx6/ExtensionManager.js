@@ -161,7 +161,7 @@
 				  ExtensionManager(Pluto).give(true|false /* to either overwrite if extension exists*/,Venus);
 				 
 				  //copies specific extensions with dependencies that are loaded already in the object or manager
-				  ExtensionManager(Pluto).give(true|false,Venus,'Moves');
+				  ExtensionManager(Pluto).give(false,Venus,'Moves');
 				
 				  //extensions can be removed from the manager or from an object that has being extended through the 'remove'
 				  //method,simple pass a string(name of valid extension) to remove
