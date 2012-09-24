@@ -1,8 +1,8 @@
 //basic extension management system
 var ExtensionManager = (function(root){
    //check the root files
-      if(!root) root = {};
-      root.ext = (root["plugins"] || root['ext'] || root["extensions"] || {});
+      var root = root;
+      if(root) root.ext = (root['ext'] || root["extensions"] || {});
 
       var validate = function(ext){
          //basic checks 
@@ -11,17 +11,17 @@ var ExtensionManager = (function(root){
          //basic checks 
          if(!ext["version"]) throw new Error("Extension has no valid version information");
          if(!ext["author"]) throw new Error("Extension has no valid author information");
-         if(!ext["license"]) throw new Error("Extension has no valid license information");
+         if(!ext["licenses"]) throw new Error("Extension has no valid licenses information");
          if(!ext["description"]) throw new Error("Extension has no valid description information");
 
          //intermediate checks
          if(!matchType(ext["version"],"string")) throw new Error("Version's value is not a string in extension!");
          if(!matchType(ext["author"],"string")) throw new Error("Author's value is not a string in extension!");
-         if(!matchType(ext["license"],"object")) throw new Error("Licence's value is not a string in extension!");
+         if(!matchType(ext["licenses"],"array")) throw new Error("Licence's must be an array of objects in extension  licenses:[ { type: mit, url: http://mths.be/mit }],!");
          if(!matchType(ext["description"],"string")) throw new Error("Description's value is not a string in extension!");
 
          //advance checks
-         if(!(ext["license"]["type"])) throw new Error("License data has no valid licence type field!");
+         //if(!(ext["licenses"]["type"])) throw new Error("License data has no valid licence type field!");
 
          return ext;
        },
@@ -50,77 +50,67 @@ var ExtensionManager = (function(root){
              return ({}).toString.call(obj).match(/\s([\w]+)/)[1].toLowerCase() === type.toLowerCase();
       },
 
-      iterable = function(collection,eachfunc,finish){
-         if(!collection || !eachfunc) return;
-         //handles management of next call for collection,be it arrays or objects
-         var len,keys,self = this,isArray = false;
-         if(this.isObject(collection)){ keys = getKeys(collection); len = keys.length; }
-         if(this.isArray(collection)){ isArray = true; len = collection.length;}
+     iterable = function(collection,eachfunc,finish){
+            if(!collection || !eachfunc) return;
+            //handles management of next call for collection,be it arrays or objects
+            var len,keys,self = this,isArray = false;
+            if(matchType(collection,"object")){ keys = getAttr(collection,true); len = keys.length; }
+            if(matchType(collection,"array")){ isArray = true; len = collection.length;}
 
-         eachfunc.collection = collection;
-         eachfunc.size = len;
-         eachfunc.__ri__ = len - 1;
-         eachfunc.pos = 0;
-         eachfunc.finish = finish;
-         eachfunc.item = null;
-         eachfunc.next = function(){
-            var item,key;
-            if(!isArray) key = getKeys[eachfunc.pos]; item = eachfunc.collection[key];
-            if(isArray) key = eachfunc.pos; item = eachfunc.collection[key];
+            eachfunc.collection = collection;
+            eachfunc.size = len;
+            eachfunc.__ri__ = len - 1;
+            eachfunc.pos = 0;
+            eachfunc.finish = finish;
+            eachfunc.item = null;
+            eachfunc.next = function(){
+               var item,key;
+               if(!isArray) key = keys[eachfunc.pos]; item = eachfunc.collection[key];
+               if(isArray) key = eachfunc.pos; item = eachfunc.collection[key];
 
-            if(eachfunc.pos >= eachfunc.size){ 
-               if(eachfunc.finish) eachfunc.finish(eachfunc.item,key,eachfunc.collection);
-               return false;
-            }
-
-            eachfunc.pos++;
-            if(!item) return false;
+               if(eachfunc.pos >= eachfunc.size){ 
+                  if(eachfunc.finish) eachfunc.finish(eachfunc.item,key,eachfunc.collection);
+                  return false;
+               }
+   
+               eachfunc.pos++;
+               if(!item) return false;
+               
+               eachfunc.item = item;
+               eachfunc(item,key,eachfunc.collection);
+               return true;
+            };
             
-            eachfunc.item = item;
-            eachfunc(item,key,eachfunc.collection);
-            return item;
-         };
-         
-         return eachfunc;
+            return eachfunc;
       }, 
-      getValues = function(o){
-	    if(!matchType(o,"object")) return false;
-	    var i=0,vals=[];
+
+      getAttr = function(o,wantKey){
+	    var i=0,res=[];
 	    for(var j in o){
-           vals[i] = o[j];
-           i++;
+           if(wantKey){ res[i] = j; i++;
+           }else{ res[i] = o[j]; i++; }
         };
-        return vals;
+        return res;
 	  },
 
-    getKeys = function(o){
-	    if(!matchType(o,"object")) return false;
-	    var i=0,vals=[];
-	    for(var j in o){
-           vals[i] = j;
-           i++;
-        };
-        return vals;
-	  },
 
      ExtensionMgr =  {
-        ext: { ext:{} },
+        __ext__: { ext:{} },
 
          create: function(name,ext,deps,mustOverwright){
-            var subject = this.ext,extensions = subject.ext,
+            var subject = this.__ext__,extensions = subject.ext,
             //basics checks for valid extensions,
             finalize = function (s,t,d){
                    var _ext,
                    dependency = validateDependency(s,d);
 
-               if(matchType(t,"function")) _ext = validate(t.apply(t,getValues(dependency)));
+               if(matchType(t,"function")) _ext = validate(t.apply(t,getAttr(dependency)));
                if(matchType(t,"object")){
                   t.depends = dependency; _ext = t;
                }
             
                s.ext[name] = validate(_ext);
-               s.ext[name].name = name;
-               s.ext[name].ename = name;
+               s.ext[name].extensionName = name;
                s.ext[name].signature = "__extensions__";
 
                //leak the extension onto the public handler
@@ -132,8 +122,9 @@ var ExtensionManager = (function(root){
             if(!matchType(name,"string")) throw new Error("Arguments are not the proper types!");
             
 
-            if(this instanceof argument.callee){
+            if(!root){
                finalize(subject,ext,deps);
+               //if(root) this.give(mustOverwright,root,name);
                return this;
             }
 
@@ -142,22 +133,52 @@ var ExtensionManager = (function(root){
          },
 
          remove: function(name){
-            var extensions = root.ext;
-            if(!extensions[name]) return;
-            delete extensions[name];
+            var e;
+            if(this instanceof arguments.callee){
+               e = this.__ext__;
+               if(e[name]) delete e[name];
+               if(root){
+                  if(root[name]) delete root[name];
+                  if(root.ext && root.ext[name]) delete root.ext[name];
+               }
+               return;
+            };
+
+            e = root.ext;
+            if(!e[name]) return;
+            delete e[name];
+            return true;
          },
 
-         give: function(obj/*,list of all extensions you want, if all,then all will be added*/){},
+         give: function(overwritable,obj/*,list of all extensions you want, if all,then all will be added*/){
+            if(!obj) return false;
 
-         lend: function(obj/*,list of extensions you need,if all,all will be lent to the obj*/){},
+            if(!obj.ext) obj.ext={};
+            var i = 0,e = this.__ext__,iterator,clean = false;
+            if(arguments.length === 2){ clean = true; /*obj.ext = Object(e.ext);*/} 
+            
+            if(!clean){
+               var args = [].splice.call(arguments,2);
+               iterator = iterable(args,function(r,i,b){
+                     if(!overwritable && (obj[r] || obj.ext[r])) return;
+                        obj.ext[r] = e.ext[r];
+                        obj[r] = obj.ext[r];
+               });
 
-         lists: function(){
-            var exts = this.ext;
-            for(var i in exts){
-               return ("Name: "+ i +" description: "+exts[i]+";")
+            }else{
+               iterator = iterable(e,function(r,i){
+                     if(!overwritable && (obj[i] || obj.ext[i])) return;
+                        obj.ext[i] = e.ext[i];
+                        obj[i] = obj.ext[i];
+                        return;
+               });
             }
-         }
-         
+
+            while(iterator.next());
+
+            return obj;
+         },
+
       };
 
       return ExtensionMgr;
