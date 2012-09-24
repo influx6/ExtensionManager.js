@@ -133,7 +133,7 @@ var ExtensionManager = (function(root){
                //s[name] = s.ext[name];
             };
 
-            if(!mustOverwright && (subject[name] || extensions[name])) throw new Error("Extension Already Exist!");
+            if(!mustOverwright && subject[name]) throw new Error("Extension Already Exist!");
             if(deps && !matchType(deps,"array")) throw new Error("Dependency list must be an Array!");
             if(!matchType(name,"string")) throw new Error("Arguments are not the proper types!");
             
