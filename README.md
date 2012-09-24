@@ -32,7 +32,7 @@
 				
 				
 # Basics Things to Note
-	- ExtensionManager is nothing more than just a standard way of adding specific objects to a specific object,so pick
+	- ExtensionManager is nothing more than just a standard way of extending a specific object,so pick
 	which you wish,to either do it manually or using this manager,but it does come with benefits that you can have a 
 	central location for all extensions and simple give and remove extensions from different objects with a added 
 	benefit of a simple dependency system(very simple system).Basicly if you need a standard way of moving and breaking
