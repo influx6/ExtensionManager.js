@@ -184,11 +184,4 @@ var ExtensionManager = (function(root){
       return ExtensionMgr;
 });
 
-var root = this;
-if(root.exports !== undefined){
-   root.exports = ExtensionManager;
-}
-else{
-    root.ExtensionManager = ExtensionManager;
- }
-
+if(module.exports) module.exports = ExtensionManager;
